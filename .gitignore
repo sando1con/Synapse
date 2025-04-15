@@ -13,3 +13,5 @@ data/raw/*
 
 data/processed/*
 !data/processed/.gitkeep
+__MACOSX/
+.DS_Store
