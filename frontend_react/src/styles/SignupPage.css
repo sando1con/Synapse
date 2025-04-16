@@ -1,0 +1,185 @@
+/* 기본 스타일 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Arial", sans-serif;
+}
+
+body {
+  background-color: #f4f7fc;
+}
+
+/* 전체 레이아웃 */
+.signup-container {
+  display: flex;
+  height: 100vh;
+}
+
+
+.left-panel {
+  width: 30%;
+  background-color: #1e40af;
+  color: white;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 문구 내용 */
+.left-panel-content {
+  display: flex;
+  flex-direction: column; /* 문구가 세로로 나열됨 */
+  justify-content: center; /* 수평 중앙 정렬 */
+  align-items: center; /* 수직 중앙 정렬 */
+}
+
+/* 개별 문구 */
+.slide-content {
+  width: 100%; /* 각 슬라이드는 100%씩 차지 */
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; /* 수평, 수직 중앙 정렬 */
+  text-align: center;
+  opacity: 0; /* 기본적으로 숨김 */
+  transition: opacity 0.5s ease; /* 부드러운 투명도 변화 */
+}
+
+.slide-content.active {
+  opacity: 1; /* 활성화된 슬라이드만 보이게 */
+}
+
+/* 인디케이터 컨테이너 (아래 원형 표시) */
+.indicator-container {
+  position: absolute;
+  bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+/* 인디케이터 원 */
+.indicator-dot {
+  width: 10px;
+  height: 10px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+/* 선택된 인디케이터 */
+.indicator-dot.active {
+  background-color: white;
+  transform: scale(1.3);
+}
+
+
+/* 오른쪽 패널 (회원가입 폼) */
+.right-panel {
+  width: 70%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-container {
+  width: 80%;
+  max-width: 400px;
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.form-container h2 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #1e40af;
+}
+
+.form-container p {
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.form-container a {
+  color: #1e40af;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.form-container a:hover {
+  text-decoration: underline;
+}
+
+/* 입력 필드 */
+.input-field {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: 0.3s;
+}
+
+.input-field:focus {
+  border-color: #1e40af;
+  outline: none;
+  box-shadow: 0 0 5px rgba(30, 64, 175, 0.3);
+}
+
+/* 버튼 */
+.button {
+  width: 100%;
+  background-color: #1e40af;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.button:hover {
+  background-color: #172d78;
+  transform: scale(1.02);
+}
+
+/* 역할 선택 버튼 */
+.role-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.role-button {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #f4f7fc;
+  transition: 0.3s;
+}
+
+.role-button:hover {
+  background-color: #e0e7ff;
+}
+
+.role-button.active {
+  background-color: #1e40af;
+  color: white;
+  border: none;
+}

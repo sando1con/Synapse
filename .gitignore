@@ -13,3 +13,9 @@ data/raw/*
 
 data/processed/*
 !data/processed/.gitkeep
+
+# React frontend build output
+frontend_react/build/
+
+# React frontend dependencies
+frontend_react/node_modules/
