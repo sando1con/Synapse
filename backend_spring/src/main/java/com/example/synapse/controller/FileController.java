@@ -30,6 +30,9 @@ import java.util.Map;
 public class FileController {
 
     @Autowired
+    private PythonRunner pythonRunner;
+
+    @Autowired
     private FileRepository fileRepository;
 
     @Autowired
@@ -97,7 +100,7 @@ public class FileController {
 
         fileRepository.save(entity);
         // 업로드 완료 후 분석 실행
-        PythonRunner.runPythonScript(user.getUserId());
+        pythonRunner.runPythonScript(user.getUserId());
         return ResponseEntity.ok("업로드 성공");
     }
 
@@ -246,7 +249,7 @@ public class FileController {
 
         fileRepository.delete(file);
         // 🔁 클러스터링 결과 재생성
-        PythonRunner.runPythonScript(userId);
+        pythonRunner.runPythonScript(userId);
         return ResponseEntity.ok("공유폴더 파일 삭제 완료");
     }
 }

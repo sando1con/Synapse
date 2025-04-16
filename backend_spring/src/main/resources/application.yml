@@ -26,4 +26,12 @@ libreoffice:
   path: "C:/Program Files/LibreOffice/program/soffice.exe"
 
 
+custom:
+  python-script-path:
+    "C:/Users/gksrn/Desktop/Synapse_docx/main.py"
+  ##python-script-path: ../backend_python/main.py
+  python-working-dir: ../backend_spring
+
+
+
 
