@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.pkl
+
+.vscode/
+.env
+
+logs/*
+!logs/.gitkeep
+
+data/raw/*
+!data/raw/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
