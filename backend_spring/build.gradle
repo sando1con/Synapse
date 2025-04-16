@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -18,22 +18,29 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
+	// 웹 & REST API
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// JPA (Hibernate 포함)
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// MySQL DB 드라이버
+	//implementation 'mysql:mysql-connector-j:8.0.33'
+	runtimeOnly 'com.mysql:mysql-connector-j:+'
+
+	// Lombok (자동 생성용)
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	testCompileOnly 'org.projectlombok:lombok'
-	testAnnotationProcessor 'org.projectlombok:lombok'
-	implementation 'org.springframework.boot:spring-boot-starter-web' // ✅ 추가
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // ✅ 추가
-	implementation 'com.mysql:mysql-connector-j' // ✅ 추가
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Spring Security (로그인 인증용)
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 
 	implementation 'org.apache.pdfbox:pdfbox:2.0.29' //pdf변환기
 
-
-
-
+	// 테스트용
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {

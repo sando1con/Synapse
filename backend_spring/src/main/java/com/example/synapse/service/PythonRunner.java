@@ -1,25 +1,26 @@
 package com.example.synapse.service;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.io.*;
 
-@Service
 public class PythonRunner {
 
-    @Value("${custom.python-script-path}")
-    private String pythonScriptPath;
+    // ✅ 개인 폴더용
+    public static void runPythonScriptForUser(String userId) {
+        runPythonWithArgs("--user_id", userId);
+    }
 
-    @Value("${custom.python-working-dir}")
-    private String pythonWorkingDir;
+    // ✅ 공유 폴더용
+    public static void runPythonScriptForSharedFolder(Long folderId) {
+        runPythonWithArgs("--shared_folder_id", String.valueOf(folderId));
+    }
 
-    public void runPythonScript(String userId) {
+    private static void runPythonWithArgs(String argName, String value) {
         try {
             ProcessBuilder pb = new ProcessBuilder(
-                    "python", pythonScriptPath, userId
+                    "python", "C:/Users/CHS/Desktop/Synapse_docx/main.py", argName, value
             );
 
-            pb.directory(new File(pythonWorkingDir));
+            pb.directory(new File("C:/Users/CHS/Desktop/synapse"));
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
@@ -27,8 +28,6 @@ public class PythonRunner {
             String line;
             while ((line = reader.readLine()) != null) {
                 System.out.println("[Python] " + line);
-                System.out.println("▶ PythonRunner 실행 - userId: " + userId);
-
             }
 
             int exitCode = process.waitFor();
