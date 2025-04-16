@@ -46,3 +46,7 @@ Thumbs.db
 
 # ========== Gradle Wrapper ==========
 !gradle/wrapper/gradle-wrapper.jar
+
+# 업로드된 사용자 파일 무시
+uploaded_files/
+
