@@ -35,6 +35,10 @@ const Home = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [activeCluster, setActiveCluster] = useState(null);
+  const [sharedClusterData, setSharedClusterData] = useState([]);
+  const [activeSharedCluster, setActiveSharedCluster] = useState(null);
+  const [activeFolderType, setActiveFolderType] = useState("private"); // "private" or "shared"
+
 
   const fitAllNodesToScreen = () => {
     if (!forceGraphRef.current || clusterData.length === 0) return;
@@ -122,22 +126,31 @@ const Home = () => {
 
   const fetchFilesInSharedFolder = (folderId) => {
     if (selectedSharedFolderId === folderId) {
+      // ✅ 다시 클릭 시 → 공유폴더 선택 해제 + 개인 그래프 다시 불러오기
       setSelectedSharedFolderId(null);
       setSharedFolderFiles([]);
+      setSharedClusterData([]);
+      setActiveFolderType("private"); // 개인 폴더로 전환
+      if (userInfo?.userId) {
+        fetchClusterData(userInfo.userId); // 개인 클러스터 다시 불러오기
+      }
       return;
     }
-
-    fetch('http://localhost:8080/api/shared-folders/${folderId}/files', {
+  
+    // ✅ 새 공유폴더 선택
+    fetch(`http://localhost:8080/api/shared-folders/${folderId}/files`, {
       credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
         setSharedFolderFiles(data);
         setSelectedSharedFolderId(folderId);
+        setActiveFolderType("shared");
+        fetchSharedFolderClusterData(folderId);
       })
       .catch((err) => console.error("공유 폴더 파일 불러오기 실패:", err));
   };
-
+  
   const handleCreateSharedFolder = () => {
     if (!newFolderName.trim()) {
       alert("폴더 이름을 입력하세요");
@@ -217,9 +230,17 @@ const Home = () => {
       alert("로그인이 필요합니다.");
       return;
     }
+  
     const encodedName = encodeURIComponent(filename);
     const encodedUserId = encodeURIComponent(userInfo.userId);
-    window.location.href = `http://localhost:8080/api/files/download-by-name?userId=${encodedUserId}&filename=${encodedName}`;
+  
+    // 공유 폴더라면 folderId도 같이 보냄
+    let downloadUrl = `http://localhost:8080/api/files/download-by-name?userId=${encodedUserId}&filename=${encodedName}`;
+    if (activeFolderType === "shared" && selectedSharedFolderId) {
+      downloadUrl += `&folderId=${selectedSharedFolderId}`;
+    }
+  
+    window.location.href = downloadUrl;
   };  
 
   const handleDeleteFile = (filename) => {
@@ -293,6 +314,31 @@ const Home = () => {
       .catch((err) => console.error("공유 폴더 불러오기 실패:", err));
   };
 
+  const fetchSharedFolderClusterData = (folderId) => {
+    fetch(`http://localhost:8080/api/shared-folder-clusters/${folderId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setSharedClusterData(data);
+        const transformed = data.map((item) => {
+          const x = item.vector_2d[0] * 200;
+          const y = item.vector_2d[1] * 200;
+          return {
+            id: item.filename,
+            cluster: item.cluster,
+            x, y,
+            fx: x,
+            fy: y,
+            color: `hsl(${(item.cluster * 45) % 360}, 70%, 50%)`,
+          };
+        });
+        setClusterData(transformed);  // 🔁 그래프 변경
+        setTimeout(() => {
+          forceGraphRef.current?.zoomToFit(400, 100);  // ✅ 확대
+        }, 300);
+      })
+      .catch((err) => console.error("공유 클러스터 JSON 실패:", err));
+  };
+
   const fetchFilesByCluster = (clusterId) => {
     if (clusterId === selectedClusterId) {
       setSelectedClusterId(null);
@@ -322,33 +368,60 @@ const Home = () => {
 
 
   const handleFolderClick = (clusterId) => {
-    setActiveCluster(prev => (prev === clusterId ? null : clusterId)); // 토글 열고 닫기
+    // 상태 먼저 갱신
+    if (activeFolderType === "shared") {
+      setActiveSharedCluster(prev => prev === clusterId ? null : clusterId);
+    } else {
+      setActiveCluster(prev => prev === clusterId ? null : clusterId);
+    }
 
-    const clusterNodes = clusterData.filter(n => n.cluster === clusterId);
-    if (clusterNodes.length === 0 || !forceGraphRef.current) return;
+    // ✅ 항상 최신 clusterData를 기반으로 확대 적용
+    setTimeout(() => {
+      const clusterNodes = clusterData.filter(n => n.cluster === clusterId);
+      if (clusterNodes.length === 0 || !forceGraphRef.current) return;
 
-    const xs = clusterNodes.map(n => n.x);
-    const ys = clusterNodes.map(n => n.y);
+      const xs = clusterNodes.map(n => n.x);
+      const ys = clusterNodes.map(n => n.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
 
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+      const boxWidth = maxX - minX;
+      const boxHeight = maxY - minY;
 
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    const boxWidth = maxX - minX;
-    const boxHeight = maxY - minY;
+      const padding = 100;
+      const viewWidth = dimensions.width - padding * 2;
+      const viewHeight = dimensions.height - padding * 2;
 
-    const padding = 100;
-    const viewWidth = dimensions.width - padding * 2;
-    const viewHeight = dimensions.height - padding * 2;
+      const zoomFactor = Math.min(viewWidth / boxWidth, viewHeight / boxHeight, 5);
 
-    const zoomFactor = Math.min(viewWidth / boxWidth, viewHeight / boxHeight, 5);
-
-    forceGraphRef.current.centerAt(centerX, centerY, 800);
-    forceGraphRef.current.zoom(zoomFactor, 800);
+      forceGraphRef.current.centerAt(centerX, centerY, 800);
+      forceGraphRef.current.zoom(zoomFactor, 800);
+    }, 100); // ⏱ clusterData 렌더링 직후로 약간 딜레이
   };
+
+  useEffect(() => {
+    if (activeTab === 1 && userInfo?.userId) {
+      // 📋 개인 클러스터 탭
+      setActiveFolderType("private");
+      setActiveSharedCluster(null);   // 공유 클러스터 열림 초기화
+      setSelectedSharedFolderId(null); // 공유 폴더 선택 해제
+      setHoverNode(null);              // 툴팁 초기화
+      fetchClusterData(userInfo.userId);
+    }
+
+    if (activeTab === 2) {
+      // 🤝 공유 폴더 탭
+      setActiveCluster(null);         // 개인 클러스터 열림 초기화
+      setActiveSharedCluster(null);   // 공유 클러스터도 초기화
+      setHoverNode(null);             // 툴팁 제거
+      setSelectedSharedFolderId(null); // 공유폴더 선택 해제
+      setSharedClusterData([]);        // 공유 노드도 초기화
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (clusterData.length > 0) {
@@ -532,18 +605,18 @@ const Home = () => {
                           </h4>
 
                           {/* 해당 폴더가 열린 상태일 때만 파일 표시 */}
-                            {activeCluster === clusterNum && (
-                              <ul className="file-list">
-                                {clusterData.filter(file => file.cluster === clusterNum).map(file => (
-                                  <li key={file.id} className="file-item">
-                                    <span>{file.id}</span>
-                                    <button onClick={() => handleDownload(file.id)}>다운로드</button>
-                                    <button onClick={() => handleDeleteFile(file.id)}>삭제</button>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
+                          {activeCluster === clusterNum && (
+                            <ul className="file-list">
+                              {clusterData.filter(file => file.cluster === clusterNum).map(file => (
+                                <li key={file.id} className="file-item">
+                                  <span>{file.id}</span>
+                                  <button onClick={() => handleDownload(file.id)}>다운로드</button>
+                                  <button onClick={() => handleDeleteFile(file.id)}>삭제</button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
                       ))}
                     </>
                   )}
@@ -587,22 +660,45 @@ const Home = () => {
                   {/* ✅ 선택된 공유폴더의 파일 보여주기 */}
                   {selectedSharedFolderId && (
                     <>
-                      <h4>📂 {sharedFolders.find(f => f.id == selectedSharedFolderId)?.folderName}의 파일들</h4>
-                      <div className="shared-folder-file-scroll-box">
-                        <ul className="file-list">
-                          {sharedFolderFiles.length === 0 ? (
-                            <li>📭 파일이 없습니다.</li>
-                          ) : (
-                            sharedFolderFiles.map(file => (
-                              <li key={file.id} className="file-item">
-                                <span>{file.filename} ({(file.size / 1024).toFixed(1)} KB)</span>
-                                <button onClick={() => handleDownload(file.filename)}>다운로드</button>
-                                <button onClick={() => handleDeleteSharedFile(selectedSharedFolderId, file.id)}>삭제</button>
-                              </li>
-                            ))
-                          )}
-                        </ul>
-                      </div>
+                      <h4>📂 {sharedFolders.find(f => f.id == selectedSharedFolderId)?.folderName}의 클러스터 결과</h4>
+                      {sharedClusterData.length === 0 ? (
+                        <p>📭 클러스터링된 데이터가 없습니다.</p>
+                      ) : (
+                        [...new Set(sharedClusterData.map(item => item.cluster))].map(clusterNum => (
+                          <div key={clusterNum}>
+                            <h5
+                              style={{ cursor: 'pointer', color: '#f0f0f0' }}
+                              onClick={() => {
+                                setActiveSharedCluster(prev => {
+                                  const next = prev === clusterNum ? null : clusterNum;
+
+                                  // 리스트 렌더링 이후 확대 수행
+                                  if (next !== null) {
+                                    setTimeout(() => handleFolderClick(next), 0);
+                                  }
+
+                                  return next;
+                                });
+                              }}
+                            >
+                              📁 클러스터 {clusterNum}
+                            </h5>
+                            {activeSharedCluster === clusterNum && (
+                              <ul className="file-list">
+                                {sharedClusterData
+                                  .filter(item => item.cluster === clusterNum)
+                                  .map(item => (
+                                    <li key={item.filename} className="file-item">
+                                      <span>{item.filename}</span>
+                                      <button onClick={() => handleDownload(item.filename)}>다운로드</button>
+                                      <button onClick={() => handleDeleteSharedFile(selectedSharedFolderId, item.filename)}>삭제</button>
+                                    </li>
+                                  ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </>
                   )}
                 </div>
@@ -652,8 +748,8 @@ const Home = () => {
         )}
       </div>
 
-       {/* 오른쪽 시각화 영역 */}
-       <div className="main-area" ref={graphWrapperRef}>
+      {/* 오른쪽 시각화 영역 */}
+      <div className="main-area" ref={graphWrapperRef}>
         <div className="top-right-controls">
           <button onClick={fitAllNodesToScreen}>🔄 전체 보기</button>
         </div>
@@ -700,9 +796,6 @@ const Home = () => {
               setHoverNode(null);
             }
           }}
-
-
-
         />
         {hoverNode && ( //flag
           <div
@@ -724,7 +817,10 @@ const Home = () => {
             <strong>{hoverNode.id}</strong><br />
             📂 클러스터 {hoverNode.cluster}
             <img
-              src={`http://localhost:8080/api/preview?userId=${userInfo.userId}&filename=${hoverNode.id}`}
+              src={`http://localhost:8080/api/preview?${activeFolderType === "shared"
+                ? `folderId=${selectedSharedFolderId}`
+                : `userId=${userInfo.userId}`
+                }&filename=${encodeURIComponent(hoverNode.id)}`}
               style={{ width: "300px", height: "auto", marginTop: "10px", borderRadius: "4px", boxShadow: "0 0 8px rgba(0,0,0,0.1)" }}
               alt="미리보기"
             />
