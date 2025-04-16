@@ -1,5 +1,5 @@
 {
-  "name": "my-app",
+  "name": "synapse-app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -7,16 +7,12 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@testing-library/user-event": "^13.5.0",
-    "d3-interpolate": "^3.0.1",
-    "d3-scale": "^4.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-force-graph": "^1.47.6",
     "react-force-graph-2d": "^1.27.1",
     "react-icons": "^5.5.0",
-    "react-router-dom": "^7.4.0",
+    "react-router-dom": "^7.3.0",
     "react-scripts": "5.0.1",
-    "recharts": "^2.15.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

@@ -24,7 +24,7 @@ const LoginPage = () => {
       if (response.ok) {
         alert("로그인 성공!");
         const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
-        navigate(redirectUrl || '/home');
+  navigate(redirectUrl || '/home');
       } else {
         const error = await response.text();
         alert(`로그인 실패: ${error}`);
