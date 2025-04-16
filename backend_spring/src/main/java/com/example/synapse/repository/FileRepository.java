@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface FileRepository extends JpaRepository<FileEntity, Long> {
     List<FileEntity> findByUser_Id(Long userId);
     List<FileEntity> findBySharedFolder_Id(Long folderId);
-    Optional<FileEntity> findByFilenameAndUser_UserId(String filename, String userId);
+    Optional<FileEntity> findByFilenameAndUser_UserIdAndSharedFolderIsNull(String filename, String userId);
     List<FileEntity> findByFilename(String filename);
     List<FileEntity> findByUser_IdAndSharedFolderIsNull(Long id);
     Optional<FileEntity> findByFilenameAndSharedFolder_IdAndUser_UserId(String filename, Long folderId, String userId);

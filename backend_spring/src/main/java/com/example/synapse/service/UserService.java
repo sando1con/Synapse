@@ -48,21 +48,30 @@ public class UserService {
 
     @Transactional
     public void deleteByUserId(String userId) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        // ✅ 자신이 owner인 공유폴더는 owner를 null로 변경 (중요!)
+        List<SharedFolder> ownedFolders = sharedFolderRepository.findByOwner(user);
+        for (SharedFolder folder : ownedFolders) {
+            folder.setOwner(null);
+            sharedFolderRepository.save(folder);
+        }
 
         // 공유 폴더 사용자 연관 삭제
         for (SharedFolder folder : user.getSharedFolders()) {
             folder.getSharedUsers().remove(user);
-            sharedFolderRepository.save(folder); // ← 이것도 중요!
+            sharedFolderRepository.save(folder);
         }
 
-        // 연관된 파일들 먼저 삭제 (선택)
+        // 업로드한 파일 삭제
         List<FileEntity> userFiles = fileRepository.findByUser_Id(user.getId());
         fileRepository.deleteAll(userFiles);
 
         // 마지막으로 유저 삭제
         userRepository.delete(user);
     }
+
 
     @Transactional
     public boolean changePassword(String userId, String currentPassword, String newPassword) {

@@ -1,19 +1,11 @@
-# ========== 빌드 및 실행 결과물 ==========
-/build/
-.gradle/
-out/
-bin/
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-# ========== IntelliJ IDEA ==========
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# ========== VS Code ==========
-.vscode/
-
-# ========== STS ==========
+### STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -21,32 +13,25 @@ bin/
 .settings
 .springBeans
 .sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
 
-# ========== NetBeans ==========
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-# ========== 환경파일 및 보안 ==========
-application.yml
-application.properties
-.env
-*.pem
-*.key
-
-# ========== 로그 및 기타 ==========
-*.log
-*.tmp
-*.bak
-*.swp
-.DS_Store
-Thumbs.db
-
-# ========== Gradle Wrapper ==========
-!gradle/wrapper/gradle-wrapper.jar
-
-# 업로드된 사용자 파일 무시
-uploaded_files/
-
+### VS Code ###
+.vscode/

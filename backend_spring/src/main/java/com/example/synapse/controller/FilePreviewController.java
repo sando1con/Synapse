@@ -18,22 +18,31 @@ public class FilePreviewController {
 
     /**
      * .docx 파일의 첫 페이지를 이미지로 반환
-     * 예: /api/preview?userId=gksrnr&filename=sample.docx
+     * 예:
+     *   - 개인: /api/preview?userId=gksrnr&filename=sample.docx
+     *   - 공유: /api/preview?folderId=5&filename=sample.docx
      */
     @GetMapping
     public ResponseEntity<byte[]> getPreviewImage(
-            @RequestParam String userId,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) Long folderId,
             @RequestParam String filename) {
 
         try {
-            // 사용자의 업로드 경로
-            File file = new File("uploaded_files/user_" + userId + "/" + filename);
+            File file;
+
+            if (folderId != null) {
+                file = new File("uploaded_files/shared_" + folderId + "/" + filename);
+            } else if (userId != null) {
+                file = new File("uploaded_files/user_" + userId + "/" + filename);
+            } else {
+                return ResponseEntity.badRequest().body(null); // 둘 다 없으면 잘못된 요청
+            }
 
             if (!file.exists()) {
                 return ResponseEntity.notFound().build();
             }
 
-            // .docx -> 이미지 변환
             BufferedImage image = previewService.convertDocxToImage(file);
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
