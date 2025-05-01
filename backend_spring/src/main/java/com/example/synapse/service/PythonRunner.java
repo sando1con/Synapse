@@ -17,10 +17,10 @@ public class PythonRunner {
     private static void runPythonWithArgs(String argName, String value) {
         try {
             ProcessBuilder pb = new ProcessBuilder(
-                    "python", "C:/Users/CHS/Desktop/Synapse_docx/main.py", argName, value
+                    "python3", "/Users/mine/Downloads/Synapse_docx_old/main.py", argName, value
             );
 
-            pb.directory(new File("C:/Users/CHS/Desktop/synapse"));
+            pb.directory(new File("/Users/mine/학교/2025-1학기/캡스톤 디자인/Synapse/backend_spring"));
             pb.redirectErrorStream(true);
             Process process = pb.start();
 

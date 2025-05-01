@@ -12,7 +12,7 @@ import java.io.*;
 @Service
 public class FilePreviewService {
 
-    @Value("${libreoffice.path}")
+    @Value("/Applications/LibreOffice.app/Contents/MacOS/soffice")
     private String libreOfficePath;
 
     /**
