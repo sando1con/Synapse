@@ -1,24 +1,27 @@
 # utils/file_manager/pdf.py
 
-def extract_text(file_path):
-    """
-    PDF 파일로부터 텍스트를 추출합니다.
-    
-    인자:
-        file_path (str): PDF 파일의 전체 경로
-    반환:
-        str: 추출한 텍스트 (추출 실패 시 빈 문자열)
-    
-    주의: PDF 텍스트 추출에는 PyPDF2 (또는 pdfminer 등) 패키지가 필요합니다.
-    """
-    text = ""
+from PyPDF2 import PdfReader
+from PyPDF2.errors import PdfReadError
+import re
+
+__all__ = ["extract_text", "extract_first_sentence"]
+
+def extract_text(file_path: str) -> str:
     try:
-        import PyPDF2
-        with open(file_path, 'rb') as f:
-            reader = PyPDF2.PdfReader(f)
-            for page in reader.pages:
-                extracted = page.extract_text()
-                text += extracted if extracted is not None else ""
+        reader = PdfReader(file_path)
+        out = []
+        for page in reader.pages:
+            txt = page.extract_text() or ""
+            out.append(txt)
+        return "\n".join(out)
+    except PdfReadError as e:
+        print(f"[PDF Error] {file_path} → {e}")
+        return ""
     except Exception as e:
-        print(f"Error reading PDF file {file_path}: {e}")
-    return text
+        print(f"[Unknown PDF Error] {file_path} → {e}")
+        return ""
+
+def extract_first_sentence(file_path: str) -> str:
+    full = extract_text(file_path)
+    parts = re.split(r"(?<=[.?!])\s+|\n", full)
+    return parts[0].strip() if parts else ""

@@ -1,17 +1,17 @@
 # utils/file_manager/txt.py
 
-def extract_text(file_path):
-    """
-    TXT 파일의 내용을 읽어 텍스트로 반환합니다.
-    
-    인자:
-        file_path (str): TXT 파일의 전체 경로
-    반환:
-        str: 파일 내의 텍스트 (읽기 실패 시 빈 문자열)
-    """
+import re
+
+__all__ = ["extract_text", "extract_first_sentence"]
+
+def extract_text(file_path: str) -> str:
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             return f.read()
-    except Exception as e:
-        print(f"Error reading TXT file {file_path}: {e}")
+    except:
         return ""
+
+def extract_first_sentence(file_path: str) -> str:
+    full = extract_text(file_path)
+    parts = re.split(r"(?<=[.?!])\s+|\n", full)
+    return parts[0].strip() if parts else ""
