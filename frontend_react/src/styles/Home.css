@@ -79,13 +79,7 @@
   width: 100%;
   max-width: 100%;  /* 너비 고정 */
   box-sizing: border-box;
-}
-
-.file-scroll-box {
-  overflow-y: auto;
-  max-height: 70vh;
-  padding-right: 15px; /* ✅ 오른쪽 공간을 충분히 확보 */
-  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .folder-select {
@@ -129,18 +123,21 @@
   padding: 0;
   list-style: none;
   width: 100%;
+  max-height: 300px; /* 적당한 높이 */
+  overflow-y: unset !important;
+  padding-right: 10px;
 }
 
 .file-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff; /* 배경색 */
-  padding: 14px 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  background-color: #ffffff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: box-shadow 0.2s;
-  color: #111827; /* 텍스트 색상 */
+  color: #111827;
 }
 
 .file-item:hover {
@@ -148,8 +145,18 @@
 }
 
 .file-item span {
+  flex: 1;
   font-size: 15px;
   color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+
+.file-item .button-group {
+  display: flex;
+  gap: 8px;
 }
 
 .file-item button {
@@ -160,24 +167,6 @@
   font-size: 13px;
   cursor: pointer;
   transition: background-color 0.2s;
-}
-
-.file-item button:first-of-type {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.file-item button:first-of-type:hover {
-  background-color: #a7f3d0;
-}
-
-.file-item button:last-of-type {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.file-item button:last-of-type:hover {
-  background-color: #fecaca;
 }
 
 .shared-folder-item {
@@ -367,8 +356,6 @@
 }
 
 .upload-area .file-list li button {
-  background-color: #c7d2fe;
-  color: #3730a3;
   border: none;
   padding: 6px 10px;
   border-radius: 6px;
@@ -378,6 +365,22 @@
 
 .upload-area .file-list li button:hover {
   background-color: #a5b4fc;
+}
+
+.upload-area .file-list li button.download-btn {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+.upload-area .file-list li button.download-btn:hover {
+  background-color: #a7f3d0;
+}
+
+.upload-area .file-list li button.delete-btn {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+.upload-area .file-list li button.delete-btn:hover {
+  background-color: #fecaca;
 }
 
 .main-area {
@@ -402,26 +405,6 @@
   transform: scale(1.03);
 }
 
-/* 예쁜 스크롤바 */
-.file-scroll-box::-webkit-scrollbar {
-  width: 10px;
-}
-
-.file-scroll-box::-webkit-scrollbar-track {
-  background: #d6ccff;   /* 트랙 배경 */
-  border-radius: 10px;
-}
-
-.file-scroll-box::-webkit-scrollbar-thumb {
-  background: #8b7dfc;   /* 스크롤 손잡이 */
-  border-radius: 10px;
-  border: 2px solid #d6ccff; /* 테두리 주면 더 부드럽게 */
-}
-
-.file-scroll-box::-webkit-scrollbar-thumb:hover {
-  background: #6d5cf0; /* 마우스 오버시 색 */
-}
-
 .progress-bar-container {
   width: 100%;
   height: 20px;
@@ -441,63 +424,6 @@
   transition: width 0.3s ease-in-out;
 }
 
-.shared-folder-scroll-box {
-  max-height: 250px; /* 🔹 원한다면 300px, 400px 등으로 조절 가능 */
-  overflow-y: auto;
-  padding-right: 8px;
-  width: 100%;  /* 너비 고정 */
-  box-sizing: border-box;
-}
-
-/* 스크롤바 꾸미기 */
-.shared-folder-scroll-box::-webkit-scrollbar {
-  width: 8px;
-}
-
-.shared-folder-scroll-box::-webkit-scrollbar-thumb {
-  background-color: #a5b4fc;
-  border-radius: 8px;
-}
-
-.shared-folder-scroll-box::-webkit-scrollbar-track {
-  background-color: #e0e7ff;
-  border-radius: 8px;
-}
-
-.shared-folder-scroll-box {
-  max-height: 200px;
-  overflow-y: auto;
-  padding-right: 8px;
-  margin-bottom: 20px;
-  box-sizing: border-box;
-}
-
-/* 📁 선택된 공유 폴더의 파일들 스크롤 영역 */
-.shared-folder-file-scroll-box {
-  max-height: 300px;
-  overflow-y: auto;
-  padding-right: 8px;
-  width: 100%;  /* 너비 고정 */
-}
-
-/* 스크롤바 꾸미기 재사용 */
-.shared-folder-scroll-box::-webkit-scrollbar,
-.shared-folder-file-scroll-box::-webkit-scrollbar {
-  width: 8px;
-}
-
-.shared-folder-scroll-box::-webkit-scrollbar-thumb,
-.shared-folder-file-scroll-box::-webkit-scrollbar-thumb {
-  background-color: #a5b4fc;
-  border-radius: 8px;
-}
-
-.shared-folder-scroll-box::-webkit-scrollbar-track,
-.shared-folder-file-scroll-box::-webkit-scrollbar-track {
-  background-color: #e0e7ff;
-  border-radius: 8px;
-}
-
 .top-right-controls {
   position: absolute;
   top: 20px;
@@ -514,15 +440,242 @@
   cursor: pointer;
 }
 
-.file-list {
+.search-bar {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 20px;
-  padding: 0;
-  list-style: none;
-  width: 100%;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.search-bar button {
+  padding: 8px 12px;
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* 📌 공통 스크롤바 디자인 */
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: #a5b4fc;
+  border-radius: 8px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background-color: #e0e7ff;
+  border-radius: 8px;
+}
+
+.file-scroll-box {
   max-height: 70vh;
   overflow-y: auto;
-  background-color: #f9fafb; /* 배경 색상 */
+  padding-right: 15px;
+  box-sizing: border-box;
+}
+
+/* 공유 폴더 전체 */
+.shared-folder-scroll-box {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+/* 공유 폴더 안의 파일 리스트 */
+.shared-folder-file-scroll-box {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar .overwrite-popup {
+  position: relative;
+  margin-top: 20px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 20px;
+  width: 300px; /* ✅ 폭 넉넉히 조정 */
+  color: #333;
+  font-size: 0.95rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 문장 스타일 */
+.sidebar .overwrite-popup .popup-content p {
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 500;
+  word-break: keep-all;
+}
+
+/* 버튼 정렬 */
+.sidebar .overwrite-popup .popup-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* 버튼 스타일 */
+.sidebar .overwrite-popup .popup-buttons button {
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background-color: #fafafa;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sidebar .overwrite-popup .popup-buttons button:hover {
+  background-color: #eee;
+}
+
+.delete-folder-btn {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.delete-folder-btn:hover {
+  background-color: #d9363e;
+}
+
+.toast-message {
+  position: fixed;
+  top: 30px; /* ⬅️ 아래가 아니라 위로 */
+  left: 400px;
+  background-color: #333;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: toast-fade-in 0.3s ease, toast-fade-out 0.3s ease 1.7s forwards;
+}
+
+@keyframes toast-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+.folder-list-scroll {
+  max-height: 60vh; /* 필요 시 조절 */
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.graph-analyzing-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffc107;
+  color: #000;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  z-index: 9999;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.toggle-button {
+  padding: 6px 16px;
+  font-size: 14px;
+  background-color: #e0e7ff;
+  color: #1e1b4b;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.toggle-button:hover {
+  background-color: #c7d2fe;
+  transform: translateY(-1px);
+}
+
+.toggle-button.active {
+  background-color: #6366f1;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* 공유 폴더 리스트 (고정 높이) */
+.shared-folder-scroll-box {
+  flex: 0 0 160px;
+  overflow-y: auto;
+  padding-right: 8px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+/* 클러스터 + 파일리스트를 포함한 나머지 전체 영역 */
+.shared-folder-body-box {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.shared-tab-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 180px); /* 검색창 등 고려해서 적당히 조절 */
+  overflow: hidden;
+}
+
+.file-item.search-hit {
+  background-color: rgba(255, 255, 0, 0.2); /* 연노란 배경 */
+  font-weight: bold;
+  border-left: 4px solid orange;
 }

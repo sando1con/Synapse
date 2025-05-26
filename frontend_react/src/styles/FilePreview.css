@@ -1,0 +1,70 @@
+/* 전체 배경 검정색 */
+.preview-wrapper {
+    display: flex;
+    background-color: #000;
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* 왼쪽 썸네일 */
+  .sidebar-thumbnails {
+    width: 100px;
+    background-color: #111;
+    padding: 10px;
+    overflow-y: auto;
+    border-right: 1px solid #444;
+  }
+  
+  .thumbnail {
+    cursor: pointer;
+    padding: 8px;
+    margin-bottom: 8px;
+    background-color: #222;
+    text-align: center;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #eee;
+    transition: background 0.2s;
+  }
+  .thumbnail:hover {
+    background-color: #444;
+  }
+  
+  /* 본문 영역 */
+  .preview-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  
+  /* 상단 버튼 */
+  .preview-header {
+    display: flex;
+    justify-content: center; /* 중앙 정렬로 변경 */
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .preview-header button {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .preview-header button:hover {
+    background: #555;
+  }
+  
+  /* 페이지 박스 */
+  .page-wrapper {
+    margin-bottom: 40px;
+  }
+  
+  .pdf-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* PDF를 수평 가운데 정렬 */
+  }  

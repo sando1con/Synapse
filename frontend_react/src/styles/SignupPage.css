@@ -18,51 +18,46 @@ body {
 
 
 .left-panel {
-  width: 30%;
-  background-color: #1e40af;
+  width: 25%;
+  min-width: 280px;
   color: white;
-  padding: 50px;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
-  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  cursor: pointer;
   overflow: hidden;
 }
 
-/* 문구 내용 */
-.left-panel-content {
-  display: flex;
-  flex-direction: column; /* 문구가 세로로 나열됨 */
-  justify-content: center; /* 수평 중앙 정렬 */
-  align-items: center; /* 수직 중앙 정렬 */
+.left-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.4); /* 어두운 오버레이 */
+  z-index: 0;
 }
 
-/* 개별 문구 */
-.slide-content {
-  width: 100%; /* 각 슬라이드는 100%씩 차지 */
-  padding: 10px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center; /* 수평, 수직 중앙 정렬 */
-  text-align: center;
-  opacity: 0; /* 기본적으로 숨김 */
-  transition: opacity 0.5s ease; /* 부드러운 투명도 변화 */
+.left-panel h1,
+.left-panel p {
+  position: relative;
+  z-index: 1;
+  color: white;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.6); /* 텍스트 가독성 보강 */
 }
 
-.slide-content.active {
-  opacity: 1; /* 활성화된 슬라이드만 보이게 */
-}
-
-/* 인디케이터 컨테이너 (아래 원형 표시) */
 .indicator-container {
   position: absolute;
-  bottom: 20px;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   gap: 10px;
+  z-index: 2;
 }
 
 /* 인디케이터 원 */
@@ -182,4 +177,19 @@ body {
   background-color: #1e40af;
   color: white;
   border: none;
+}
+
+.fade {
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+.fade.show {
+  opacity: 1;
+}
+
+.error-text {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  margin-bottom: 8px;
 }
