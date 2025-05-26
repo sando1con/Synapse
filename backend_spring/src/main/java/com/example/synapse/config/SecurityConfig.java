@@ -12,12 +12,16 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors().and()
-                .csrf().disable() // CSRF 비활성화 (개발용)
+                .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/**").permitAll() // 회원가입, 로그인 등 허용
-                        .anyRequest().authenticated()           // 나머지는 로그인 필요
+                        .requestMatchers(
+                                "/", "/index.html", "/favicon.ico", "/manifest.json",
+                                "/static/**", "/js/**", "/css/**", "/images/**",
+                                "/api/**", "/shared/**"
+                        ).permitAll()
+                        .anyRequest().permitAll() // ← 여기서 authenticated() 대신 임시로 permitAll 해도 됨
                 )
-                .formLogin().disable(); // 기본 로그인 화면 제거
+                .formLogin().disable();
 
         return http.build();
     }

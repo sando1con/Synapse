@@ -1,57 +1,77 @@
 package com.example.synapse.controller;
 
 import com.example.synapse.service.FilePreviewService;
+import com.example.synapse.service.S3Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
 
 @RestController
-@RequestMapping("/api/preview")
+@RequestMapping("/api/preview/full-pdf")
 public class FilePreviewController {
 
     @Autowired
     private FilePreviewService previewService;
 
+    @Autowired
+    private S3Service s3Service;
+
     /**
-     * .docx 파일의 첫 페이지를 이미지로 반환
+     * 다양한 파일(docx, pdf, hwp, txt 등)을 PDF로 변환하거나 그대로 반환
      * 예:
-     *   - 개인: /api/preview?userId=gksrnr&filename=sample.docx
-     *   - 공유: /api/preview?folderId=5&filename=sample.docx
+     *   - 개인: /api/preview/full-pdf?userId=gksrnr&filename=sample.docx
+     *   - 공유: /api/preview/full-pdf?folderId=5&filename=sample.docx
      */
     @GetMapping
-    public ResponseEntity<byte[]> getPreviewImage(
+    public ResponseEntity<byte[]> getPreviewPdf(
             @RequestParam(required = false) String userId,
             @RequestParam(required = false) Long folderId,
             @RequestParam String filename) {
 
         try {
-            File file;
-
+            // 🔑 S3 Key 결정
+            String s3Key;
             if (folderId != null) {
-                file = new File("uploaded_files/shared_" + folderId + "/" + filename);
+                s3Key = "shared_" + folderId + "/" + filename;
             } else if (userId != null) {
-                file = new File("uploaded_files/user_" + userId + "/" + filename);
+                s3Key = "user_" + userId + "/" + filename;
             } else {
-                return ResponseEntity.badRequest().body(null); // 둘 다 없으면 잘못된 요청
+                return ResponseEntity.badRequest().body(null);
             }
 
-            if (!file.exists()) {
+            if (!s3Service.fileExists(s3Key)) {
                 return ResponseEntity.notFound().build();
             }
 
-            BufferedImage image = previewService.convertDocxToImage(file);
+            byte[] pdfBytes;
+            InputStream fileStream = s3Service.downloadFile(s3Key);
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "png", baos);
+            // 🔁 파일 확장자에 따라 처리 분기
+            if (filename.endsWith(".pdf")) {
+                pdfBytes = fileStream.readAllBytes();
+            } else if (filename.endsWith(".docx")) {
+                pdfBytes = previewService.convertDocxToPdfBytes(fileStream);
+            } else if (filename.endsWith(".hwp")) {
+                pdfBytes = previewService.convertHwpToPdfViaHancom(fileStream);
+            } else if (filename.endsWith(".txt")) {
+                pdfBytes = previewService.convertTxtToPdfViaLibreOffice(fileStream);
+            }
+            else if (filename.endsWith(".pptx")) {
+                pdfBytes = previewService.convertPptxToPdfBytes(fileStream);
+            } else if (filename.endsWith(".xlsx")) {
+                pdfBytes = previewService.convertXlsxToPdfBytes(fileStream);
+            } else if (filename.endsWith(".md")) {
+                pdfBytes = previewService.convertMdToPdfBytes(fileStream);
+            }
+            else {
+                return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
+            }
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_PNG);
-
-            return new ResponseEntity<>(baos.toByteArray(), headers, HttpStatus.OK);
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
 
         } catch (Exception e) {
             e.printStackTrace();
