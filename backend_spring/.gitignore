@@ -1,17 +1,20 @@
-# AWS 및 환경 변수
+# ✅ AWS 키/환경 변수 파일 보호
 .env
+.env.*
 *.pem
 .aws/
 aws_credentials
+**/application.properties
+**/application.yml
 
-# gradle & 빌드 디렉터리
+# ✅ Gradle & 빌드 디렉터리
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
+# ✅ STS
 .apt_generated
 .classpath
 .factorypath
@@ -23,7 +26,7 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
+# ✅ IntelliJ IDEA
 .idea
 *.iws
 *.iml
@@ -32,12 +35,12 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
+# ✅ NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# ✅ VS Code
 .vscode/
