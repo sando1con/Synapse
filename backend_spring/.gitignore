@@ -1,4 +1,10 @@
-HELP.md
+# AWS 및 환경 변수
+.env
+*.pem
+.aws/
+aws_credentials
+
+# gradle & 빌드 디렉터리
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
