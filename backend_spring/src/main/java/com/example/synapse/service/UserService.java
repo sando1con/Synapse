@@ -34,6 +34,14 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public boolean existsByUserId(String userId) {
+        return userRepository.existsByUserId(userId);
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
     // 로그인
     public User login(String userId, String password) {
         return userRepository.findByUserId(userId)

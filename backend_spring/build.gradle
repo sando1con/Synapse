@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(23)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -41,6 +41,17 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	//aws s3
+	implementation 'software.amazon.awssdk:s3:2.20.36'
+	implementation 'software.amazon.awssdk:auth:2.20.36'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.springframework:spring-test' // ✅ MockMultipartFile이 여기 있음
+
+	implementation 'org.commonmark:commonmark:0.21.0'
+	implementation 'org.commonmark:commonmark-ext-gfm-tables:0.21.0'
+	implementation 'org.commonmark:commonmark-ext-gfm-strikethrough:0.21.0'
 }
 
 tasks.named('test') {

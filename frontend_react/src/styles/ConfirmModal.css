@@ -1,0 +1,68 @@
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .modal-box {
+    background: white;
+    padding: 24px 30px;
+    border-radius: 10px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .modal-box p {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .modal-buttons {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+  }
+  
+  .confirm-btn {
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .confirm-btn:hover {
+    background-color: #c9302c;
+  }
+  
+  .cancel-btn {
+    background-color: #ccc;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .cancel-btn:hover {
+    background-color: #bbb;
+  }
+  
+  .confirm-btn:disabled,
+  .cancel-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }  

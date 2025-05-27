@@ -16,4 +16,5 @@ public interface FileRepository extends JpaRepository<FileEntity, Long> {
     List<FileEntity> findByFilename(String filename);
     List<FileEntity> findByUser_IdAndSharedFolderIsNull(Long id);
     Optional<FileEntity> findByFilenameAndSharedFolder_IdAndUser_UserId(String filename, Long folderId, String userId);
+    Optional<FileEntity> findByFilenameAndSharedFolder_Id(String filename, Long folderId);
 }

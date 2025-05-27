@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/LoginPage.css';
 
@@ -6,13 +6,29 @@ const LoginPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
+  const [showText, setShowText] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowText(false); // 사라짐
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % panelContents.length);
+        setShowText(true); // 다시 나타남
+      }, 300); // 텍스트가 완전히 사라지고 나서 바뀌도록
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setErrorMessage("");
+  
     try {
-      const response = await fetch("http://localhost:8080/api/users/login", {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/users/login`, {
         method: "POST",
         credentials: 'include',
         headers: {
@@ -20,40 +36,47 @@ const LoginPage = () => {
         },
         body: JSON.stringify({ userId, password }),
       });
-
+  
       if (response.ok) {
-        alert("로그인 성공!");
         const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
-  navigate(redirectUrl || '/home');
+        navigate(redirectUrl || '/home');
       } else {
-        const error = await response.text();
-        alert(`로그인 실패: ${error}`);
+        const error = await response.json(); // <-- 중요!
+        setErrorMessage(error.message || "로그인 실패");
       }
     } catch (err) {
       console.error(err);
-      alert("서버와 연결할 수 없습니다.");
+      setErrorMessage("서버와 연결할 수 없습니다.");
     }
-  };
+  };  
 
   const panelContents = [
     {
-      image: "https://source.unsplash.com/random/600x800?nature",
-      title: "제목1",
-      description: "설명1",
+      image: "/images/img1.png",
+      title: "파일을 더 쉽게",
+      description: "클라우드 기반 파일 시스템으로 어디서든 안전하게 접근하고 관리하세요.",
     },
     {
-      image: "https://source.unsplash.com/random/600x800?tech",
-      title: "제목2",
-      description: "설명2",
+      image: "/images/img2.png",
+      title: "AI 자동 분류",
+      description: "문서 내용을 분석해 자동으로 그룹화하고, 시각화하여 보여드립니다.",
     },
     {
-      image: "https://source.unsplash.com/random/600x800?city",
-      title: "제목3",
-      description: "설명3",
+      image: "/images/img3.png",
+      title: "효율적인 공유",
+      description: "팀원과 공유폴더를 생성하고 실시간으로 파일을 주고받아 보세요.",
     },
   ];
 
-  const goToPanel = (index) => setCurrentIndex(index);
+  const goToPanel = (index) => {
+    if (index !== currentIndex) {
+      setShowText(false);
+      setTimeout(() => {
+        setCurrentIndex(index);
+        setShowText(true);
+      }, 300);
+    }
+  };
 
   return (
     <div className="signup-container">
@@ -67,8 +90,12 @@ const LoginPage = () => {
           position: "relative",
         }}
       >
-        <h1>{panelContents[currentIndex].title}</h1>
-        <p>{panelContents[currentIndex].description}</p>
+        <h1 className={`fade ${showText ? 'show' : ''}`}>
+          {panelContents[currentIndex].title}
+        </h1>
+        <p className={`fade ${showText ? 'show' : ''}`}>
+          {panelContents[currentIndex].description}
+        </p>
 
         <div className="indicator-container">
           {panelContents.map((_, index) => (
@@ -105,6 +132,7 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+             {errorMessage && <p className="error-text">{errorMessage}</p>}
             <button className="button" type="submit">Login</button>
           </form>
           <p></p>
