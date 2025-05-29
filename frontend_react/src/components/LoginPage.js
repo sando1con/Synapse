@@ -137,7 +137,7 @@ const LoginPage = () => {
           </form>
           <p></p>
           <p>계정이 없으신가요? <Link to="/create-account">계정 생성하기</Link></p>
-
+{/*
           <div className="social-login">
             <button className="social-btn google-btn">
               <img src="/images/google.png" alt="Google" />
@@ -152,6 +152,7 @@ const LoginPage = () => {
               Naver
             </button>
           </div>
+*/}
         </div>
       </div>
     </div>

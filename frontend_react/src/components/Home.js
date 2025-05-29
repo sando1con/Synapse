@@ -6,14 +6,20 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ConfirmModal from '../components/ConfirmModal';
 import { useNavigate } from 'react-router-dom'; // ✅ 추가
+import { useLocation } from 'react-router-dom';
 
 import '../styles/Home.css';
 
 const Home = () => {
-  const navigate = useNavigate(); // ✅ 추가
+  const clusterRefs = useRef({});
+  const sharedClusterRefs = useRef({});
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const navigate = useNavigate(); // ✅ 추가
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab ?? 0);
+  const [activeCluster, setActiveCluster] = useState(location.state?.activeCluster ?? null);
+  const [isCollapsed, setIsCollapsed] = useState(location.state?.isCollapsed ?? false);
   const [fileList, setFileList] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -40,7 +46,6 @@ const Home = () => {
   const [selectedClusterId, setSelectedClusterId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [activeCluster, setActiveCluster] = useState(null);
   const [sharedClusterData, setSharedClusterData] = useState([]);
   const [activeSharedCluster, setActiveSharedCluster] = useState(null);
   const [activeFolderType, setActiveFolderType] = useState("private"); // "private" or "shared"
@@ -54,7 +59,6 @@ const Home = () => {
   const [clusterSource, setClusterSource] = useState("none"); // "private", "shared", "none"
   const [groupBy, setGroupBy] = useState("category"); // 또는 "extension"
   const [sharedGroupBy, setSharedGroupBy] = useState("category"); // "category" | "extension"
-  const [searchResults, setSearchResults] = useState([]); // 🔍 검색된 파일만 따로 추적
 
   const handleCopyUrl = (shareableUrl) => {
     // 1️⃣ 최신 API 시도
@@ -154,7 +158,6 @@ const Home = () => {
         )
       );
       setSelectedClusterFiles(filtered);
-      setSearchResults(filtered); // ✅ 강조용 결과 저장
       if (filtered.length > 0) {
         const groupName = groupBy === "extension"
           ? getExtension(filtered[0].id)
@@ -173,7 +176,6 @@ const Home = () => {
         file.super_category?.toLowerCase().includes(lowerSearch)
       );
       setSelectedClusterFiles(filtered);
-      setSearchResults(filtered); // ✅ 강조용 결과 저장
       if (filtered.length > 0) {
         const groupName = sharedGroupBy === "extension"
           ? getExtension(filtered[0].filename)
@@ -869,6 +871,24 @@ const Home = () => {
   };
 
   useEffect(() => {
+    if (activeCluster && clusterRefs.current[activeCluster]?.current) {
+      clusterRefs.current[activeCluster].current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  }, [activeCluster]);
+
+  useEffect(() => {
+    if (activeSharedCluster && sharedClusterRefs.current[activeSharedCluster]?.current) {
+      sharedClusterRefs.current[activeSharedCluster].current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  }, [activeSharedCluster]);
+
+  useEffect(() => {
     if (searchTerm.trim() === "") {
       setDimmedNodes([]);
       setIsSearching(false);  // ✅ 검색 종료
@@ -1146,63 +1166,59 @@ const Home = () => {
                 <div className="upload-area">
                   <h3>📋 내 폴더</h3>
 
-                  {/* 🔘 분류 방식 버튼 */}
+                  {/* 파이드 범위 방식 버튼 */}
                   <div className="toggle-button-group">
-                    <button
-                      className={`toggle-button ${groupBy === 'category' ? 'active' : ''}`}
-                      onClick={() => {
-                        setGroupBy("category");
-                        setActiveCluster(null);
-                      }}
-                    >
-                      카테고리 기준
-                    </button>
-                    <button
-                      className={`toggle-button ${groupBy === 'extension' ? 'active' : ''}`}
-                      onClick={() => {
-                        setGroupBy("extension");
-                        setActiveCluster(null);
-                      }}
-                    >
-                      확장자 기준
-                    </button>
+                    <button className={`toggle-button ${groupBy === 'category' ? 'active' : ''}`} onClick={() => { setGroupBy("category"); setActiveCluster(null); }}>카테고리 기준</button>
+                    <button className={`toggle-button ${groupBy === 'extension' ? 'active' : ''}`} onClick={() => { setGroupBy("extension"); setActiveCluster(null); }}>확장자 기준</button>
                   </div>
 
-                  {/* 🔍 검색 */}
                   <div className="search-bar">
-                    <input
-                      type="text"
-                      placeholder="파일 이름 검색"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    <input type="text" placeholder="파일 이름 검색" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                   </div>
 
-                  {/* 📂 분류된 목록 */}
                   <div className="folder-list-scroll custom-scroll">
-                    {Object.entries(groupFiles(clusterData.filter(f => f.type === 'file'))).map(
-                      ([groupName, files]) => (
-                        <div key={groupName} style={{ marginBottom: '20px' }}>
-                          <h4
-                            style={{ cursor: 'pointer', color: '#f0f0f0', fontWeight: 'bold' }}
-                            onClick={() => {
-                              const anyFile = files[0];
-                              if (anyFile && typeof anyFile.cluster === 'number') {
-                                const shouldZoom = groupBy === "category"; // 🔥 조건 추가
-                                handleFolderClick(anyFile.cluster, groupName, shouldZoom);
-                              }
-                            }}
-                          >
-                            📂 {groupName}
-                          </h4>
+                    {Object.entries(groupFiles(clusterData.filter(f => f.type === 'file'))).map(([groupName, files]) => {
+                      if (!clusterRefs.current[groupName]) {
+                        clusterRefs.current[groupName] = React.createRef();
+                      }
+                      return (
+                        <div key={groupName} ref={clusterRefs.current[groupName]} style={{ marginBottom: '20px' }}>
+                          <h4 style={{ cursor: 'pointer', color: '#f0f0f0', fontWeight: 'bold' }} onClick={() => {
+                            const anyFile = files[0];
+                            if (anyFile && typeof anyFile.cluster === 'number') {
+                              const shouldZoom = groupBy === "category";
+                              handleFolderClick(anyFile.cluster, groupName, shouldZoom);
+                            }
+                          }}>📂 {groupName}</h4>
                           {activeCluster === groupName && (
                             <div className="file-scroll-box custom-scroll">
                               <ul className="file-list">
                                 {files.map(file => {
-                                  const isSearchMatch = isSearching && searchResults.some(f => f.id === file.id);
+                                  const isSearchMatch = isSearching && selectedClusterFiles.some(f => f.id === file.id);
                                   return (
                                     <li key={file.id} className={`file-item ${isSearchMatch ? 'search-hit' : ''}`}>
-                                      <span title={file.id}>{file.id}</span>
+                                      <span
+                                        title={file.id}
+                                        style={{ cursor: 'pointer', textDecoration: 'none' }}  // ✅ underline → none
+                                        onClick={() => {
+                                          const filename = encodeURIComponent(file.id);
+                                          const folderParam = `userId=${userInfo.userId}`;
+                                          navigate(`/preview?${folderParam}&filename=${filename}`, {
+                                            state: {
+                                              activeTab,
+                                              activeCluster,
+                                              isCollapsed,
+                                              selectedSharedFolderId,
+                                              activeSharedCluster,
+                                              zoomLevel,
+                                              searchTerm,
+                                            },
+                                          });
+                                        }}
+                                      >
+                                        {file.id}
+                                      </span>
+
                                       <button className="download-btn" onClick={() => handleDownload(file.id)}>다운로드</button>
                                       <button className="delete-btn" onClick={() => handleDeleteFile(file.id)}>삭제</button>
                                     </li>
@@ -1212,8 +1228,8 @@ const Home = () => {
                             </div>
                           )}
                         </div>
-                      )
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1240,7 +1256,7 @@ const Home = () => {
                     <button onClick={handleCreateSharedFolder}>생성</button>
                   </div>
 
-                  {/* 🔁 공유폴더 목록 (고정 높이 + 스크롤) */}
+                  {/* 🔁 공유폴더 목록 */}
                   <div className="shared-folder-scroll-box custom-scroll">
                     <ul className="shared-folder-list">
                       {sharedFolders.map((folder) => (
@@ -1259,7 +1275,7 @@ const Home = () => {
                     </ul>
                   </div>
 
-                  {/* 🔁 클러스터 + 파일 리스트 통합 영역 (스크롤) */}
+                  {/* 🔁 클러스터 + 파일 리스트 */}
                   {selectedSharedFolderId && (
                     <div className="shared-folder-body-box custom-scroll">
                       <h4>📂 {sharedFolders.find(f => f.id == selectedSharedFolderId)?.folderName}</h4>
@@ -1288,42 +1304,48 @@ const Home = () => {
                       {sharedClusterData.length === 0 ? (
                         <p>📭 업로드된 파일이 없습니다.</p>
                       ) : (
-                        Object.entries(groupSharedFiles(sharedClusterData)).map(([groupName, files]) => (
-                          <div key={groupName}>
-                            <h5
-                              style={{ cursor: 'pointer', color: '#f0f0f0' }}
-                              onClick={() => {
-                                setActiveSharedCluster(prev => {
-                                  const next = prev === groupName ? null : groupName;
-                                  if (next !== null) {
-                                    const shouldZoom = sharedGroupBy === "category";
-                                    setTimeout(() => handleFolderClick(files[0].cluster, groupName, shouldZoom), 0);
-                                  }
-                                  return next;
-                                });
-                              }}
-                            >
-                              📁 {groupName}
-                            </h5>
+                        Object.entries(groupSharedFiles(sharedClusterData)).map(([groupName, files]) => {
+                          if (!sharedClusterRefs.current[groupName]) {
+                            sharedClusterRefs.current[groupName] = React.createRef(); // ✅ ref 생성
+                          }
 
-                            {activeSharedCluster === groupName && (
-                              <div className="shared-folder-file-scroll-box custom-scroll">
-                                <ul className="file-list">
-                                  {files.map(item => {
-                                    const isSearchMatch = isSearching && searchResults.some(f => f.filename === item.filename);
-                                    return (
-                                      <li key={item.filename} className={`file-item ${isSearchMatch ? 'search-hit' : ''}`}>
-                                        <span title={item.filename}>{item.filename}</span>
-                                        <button className="download-btn" onClick={() => handleDownload(item.filename)}>다운로드</button>
-                                        <button className="delete-btn" onClick={() => handleDeleteSharedFile(selectedSharedFolderId, item.filename)}>삭제</button>
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        ))
+                          return (
+                            <div key={groupName} ref={sharedClusterRefs.current[groupName]}>
+                              <h5
+                                style={{ cursor: 'pointer', color: '#f0f0f0' }}
+                                onClick={() => {
+                                  setActiveSharedCluster(prev => {
+                                    const next = prev === groupName ? null : groupName;
+                                    if (next !== null) {
+                                      const shouldZoom = sharedGroupBy === "category";
+                                      setTimeout(() => handleFolderClick(files[0].cluster, groupName, shouldZoom), 0);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                              >
+                                📁 {groupName}
+                              </h5>
+
+                              {activeSharedCluster === groupName && (
+                                <div className="shared-folder-file-scroll-box custom-scroll">
+                                  <ul className="file-list">
+                                    {files.map(item => {
+                                      const isSearchMatch = isSearching && selectedClusterFiles.some(f => f.filename === item.filename);
+                                      return (
+                                        <li key={item.filename} className={`file-item ${isSearchMatch ? 'search-hit' : ''}`}>
+                                          <span title={item.filename}>{item.filename}</span>
+                                          <button className="download-btn" onClick={() => handleDownload(item.filename)}>다운로드</button>
+                                          <button className="delete-btn" onClick={() => handleDeleteSharedFile(selectedSharedFolderId, item.filename)}>삭제</button>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
                       )}
                     </div>
                   )}
@@ -1512,7 +1534,13 @@ const Home = () => {
               const folderParam = activeFolderType === "shared"
                 ? `folderId=${selectedSharedFolderId}`
                 : `userId=${userInfo.userId}`;
-              navigate(`/preview?${folderParam}&filename=${filename}`);
+              navigate(`/preview?${folderParam}&filename=${filename}`, {
+                state: {
+                  activeTab,
+                  activeCluster,
+                  isCollapsed
+                }
+              });
             } else if (node.type === "cluster") {
               // ✅ 클러스터 폴더 열기 (기존 동작)
               handleFolderClick(node.cluster);
