@@ -110,8 +110,10 @@ java -jar build/libs/synapse-0.0.1-SNAPSHOT.jar
 - DELETE `files/delete-by-name` : 개인 파일 삭제
 - DELETE `files/shared-folder/delete-by-name` : 공유 폴더 내 파일 삭제
 - GET `files/check` : 파일 존재 여부 확인
+
 **[미리보기]**
 - GET `preview/full-pdf` : 다양한 형식 파일 PDF로 변환 및 반환
+  
 **[공유 폴더]**
 - POST `shared-folders/create` : 공유 폴더 생성 및 URL 발급
 - GET `shared-folders/files` : 수락된 공유 폴더 파일 목록
@@ -119,14 +121,17 @@ java -jar build/libs/synapse-0.0.1-SNAPSHOT.jar
 - GET `shared-folders/my-folders` : 내가 속한 공유 폴더 목록
 - GET `shared-folders/{folderId}/files` : 특정 공유 폴더의 파일 목록
 - DELETE `shared-folders/delete/{folderId}` : 공유 폴더 삭제
+  
 **[분석]**
 - POST `/api/analyze/user` : 개인 업로드 파일 분석
 - POST `/api/analyze/shared?folderId={id}` : 공유 폴더 파일 분석
+  
 **[클러스터링 결과]**
 - GET `/api/clusters` : 사용자 클러스터링 결과
 - GET `/api/cluster-files` : 사용자 특정 클러스터 파일 목록
 - GET `/api/shared-folder-clusters` : 공유 폴더 클러스터링 결과
 - GET `/api/shared-folder-cluster-files` : 공유 폴더 특정 클러스터 파일 목록
+  
 **[사용자]**
 - POST `users/register` : 회원가입
 - POST `users/login` : 로그인
