@@ -8,7 +8,6 @@ import Signup from './components/Signup';
 import Home from './components/Home';
 import SharedAcceptPage from './components/SharedAcceptPage';
 import FilePreview from './components/FilePreview';
-import FileEditor from './components/FileEditor';
 
 const App = () => {
   return (
@@ -23,8 +22,6 @@ const App = () => {
         <Route path="/shared/:url" element={<SharedAcceptPage />} />
 
         <Route path="/preview" element={<FilePreview />} />
-        <Route path="/edit" element={<FileEditor />} />
-
         {/* 항상 마지막에 와야 함 */}
         <Route path="*" element={<LoginPage />} />
 
