@@ -1,3 +1,5 @@
+# utils/clustering_utils.py
+
 import os
 import re
 import json
@@ -24,8 +26,47 @@ okt = Okt()
 # =================== 임베딩 관련 함수 ===================
 MODEL = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
 
+import time
+
 def encode_documents(texts):
-    return MODEL.encode(texts, normalize_embeddings=True)
+    alpha = 0.7  # SBERT 가중치
+    beta = 0.3  # TF-IDF 가중치
+
+    start_total = time.time()
+
+    print(" [1] SBERT 임베딩 시작...")
+    start = time.time()
+    sbert_vectors = MODEL.encode(texts, normalize_embeddings=True)
+    print(f" SBERT 완료: {time.time() - start:.2f}초")
+
+    print(" [2] 명사 추출 시작...")
+    start = time.time()
+    noun_texts = extract_nouns_from_texts(texts)
+    print(f" 명사 추출 완료: {time.time() - start:.2f}초")
+
+    print(" [3] TF-IDF 벡터화 시작...")
+    start = time.time()
+    max_features = 300
+    tfidf_vectorizer = TfidfVectorizer(
+        max_features=max_features,
+        ngram_range=(1, 2)  # ✅ bigram까지 고려
+    )
+    tfidf_matrix = tfidf_vectorizer.fit_transform(noun_texts).toarray()
+    print(f" TF-IDF 완료: {time.time() - start:.2f}초")
+
+    print(" [4] 벡터 결합 시작...")
+    start = time.time()
+    sbert_scaled = StandardScaler().fit_transform(sbert_vectors)
+    tfidf_scaled = StandardScaler().fit_transform(tfidf_matrix)
+
+    combined_vectors = np.hstack([
+        sbert_scaled * alpha,
+        tfidf_scaled * beta
+    ])
+    print(f" 벡터 결합 완료: {time.time() - start:.2f}초")
+    print(f" 전체 소요 시간: {time.time() - start_total:.2f}초\n")
+
+    return combined_vectors
 
 # =================== 차원 축소 및 정규화 함수 ===================
 
@@ -56,7 +97,7 @@ def get_dynamic_k_min(n_docs):
         return 2
     elif n_docs < 60:
         return 3
-    elif n_docs < 120:
+    elif n_docs < 100:
         return 4
     elif n_docs < 200:
         return 5
@@ -73,7 +114,7 @@ def get_dynamic_k_min(n_docs):
 
 # =================== 클러스터링 함수 ===================
 
-def find_best_k(vectors, max_ratio=0.15, random_state=42):
+def find_best_k(vectors, max_ratio=0.2, random_state=42):
     """
     Silhouette 점수를 기반으로 최적의 클러스터 수(K)를 찾습니다.
 
@@ -89,7 +130,7 @@ def find_best_k(vectors, max_ratio=0.15, random_state=42):
     print(" [DEBUG] find_best_k() 호출됨!")
     n_docs = len(vectors)
     k_min = get_dynamic_k_min(n_docs)
-    k_max = max(k_min + 2, int(n_docs * max_ratio))
+    k_max = max(k_min + 4, int(n_docs * max_ratio))
     k_max = min(k_max, n_docs - 1)
     if k_max < k_min:
         print(f"[경고] 유효한 K 범위가 없습니다. (k_min={k_min}, k_max={k_max}) → 기본 k=1 반환")
@@ -127,12 +168,16 @@ def cluster_documents_kmeans(vectors, auto_k=True, default_k=3, random_state=42)
         tuple: (KMeans 모델, 각 벡터에 대한 클러스터 라벨, 선택된 클러스터 수)
     """
     if auto_k:
-        best_k = find_best_k(vectors, max_ratio=0.15, random_state=random_state)
+        best_k = find_best_k(vectors, max_ratio=0.2, random_state=random_state)
     else:
         best_k = default_k
-
+    print(f"[5] KMeans(n_clusters={best_k}) 학습 시작...")
+    start = time.time()
     kmeans = KMeans(n_clusters=best_k, random_state=random_state)
     labels = kmeans.fit_predict(vectors)
+    end = time.time()
+    print(f"✅ KMeans 완료: {end - start:.2f}초")
+
     return kmeans, labels, best_k
 
 
@@ -194,38 +239,3 @@ def extract_representative_keywords(texts, labels, top_n=5):
 
 
 # =================== 시각화 함수 ===================
-def visualize_clusters(reduced_vectors, labels, file_paths, user_id=None, shared_id=None):
-    """
-    2차원 벡터와 클러스터 라벨을 이용한 산점도 시각화.
-    결과 이미지를 사용자/공유폴더 기준으로 로컬에 저장합니다.
-    """
-
-    # 폰트 설정 (한글깨짐 방지)
-    if platform.system() == 'Windows':
-        plt.rcParams['font.family'] = 'Malgun Gothic'
-    elif platform.system() == 'Darwin':  # macOS
-        plt.rcParams['font.family'] = 'AppleGothic'
-    else:  # Linux (서버)
-        plt.rcParams['font.family'] = 'NanumGothic'
-
-    plt.rcParams['axes.unicode_minus'] = False
-
-    # 시각화
-    plt.figure(figsize=(8, 6))
-    scatter = plt.scatter(reduced_vectors[:, 0], reduced_vectors[:, 1], c=labels, cmap='tab10', alpha=0.7)
-
-    for i, file in enumerate(file_paths):
-        plt.text(reduced_vectors[i, 0], reduced_vectors[i, 1], os.path.basename(file), fontsize=8, ha='right')
-
-    plt.xlabel("PCA1")
-    plt.ylabel("PCA2")
-    plt.title("KMeans Clustering with Sentence-BERT")
-    plt.colorbar(scatter, label="Cluster")
-    plt.tight_layout()
-
-    # 🔽 저장 경로 설정
-    save_path = get_processed_data_path("cluster.png", user_id=user_id, shared_id=shared_id)
-    plt.savefig(save_path)
-    plt.close()
-
-    print(f"[시각화] 클러스터 시각화 이미지 저장됨 → {save_path}")

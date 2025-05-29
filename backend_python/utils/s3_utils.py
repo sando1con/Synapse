@@ -1,3 +1,5 @@
+# utils/s3_utils.py
+
 import boto3
 import tempfile
 import os
@@ -126,3 +128,29 @@ def save_merged_results_to_s3(s3_prefix, merged_results):
     os.remove(tmpfile_path)
 
     print(f"[S3] 병합 결과 저장 완료 → {s3_prefix}document_clusters_kmeans.json")
+
+def delete_file_from_s3_if_empty_text(user_id=None, shared_id=None, filename=None):
+    """
+    빈 텍스트 파일을 S3에서 삭제합니다.
+    user_id 또는 shared_id 중 하나는 반드시 전달해야 합니다.
+    :param user_id: 개인 파일인 경우 사용자 ID
+    :param shared_id: 공유 폴더 파일인 경우 공유 폴더 ID
+    :param filename: 삭제할 파일 이름 (예: 'abc.txt')
+    """
+    if not filename:
+        print("[ERROR] 파일 이름이 없습니다.")
+        return
+
+    if user_id:
+        s3_key = f"user_{user_id}/{filename}"
+    elif shared_id:
+        s3_key = f"shared_{shared_id}/{filename}"
+    else:
+        print("[ERROR] user_id나 shared_id가 없습니다.")
+        return
+
+    try:
+        s3.delete_object(Bucket=BUCKET_NAME, Key=s3_key)
+        print(f"[S3 삭제 완료] {s3_key}")
+    except Exception as e:
+        print(f"[S3 삭제 실패] {s3_key} → {e}")

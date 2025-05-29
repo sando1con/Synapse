@@ -55,20 +55,6 @@ def extract_text(file_path):
         return ""
 
 def extract_first_sentence(file_path):
-    try:
-        result = subprocess.run(
-            ['hwp5txt', file_path],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        content = result.stdout.strip()
-
-        # 문장 단위로 분리 (한글 기준 마침표 + 줄바꿈)
-        sentences = re.split(r'[.!?]\s+', content)
-        if sentences:
-            return sentences[0].strip()
-        return ""
-    except Exception as e:
-        print("오류 발생:", e)
-        return ""
+    full = extract_text(file_path)
+    parts = re.split(r"(?<=[.?!])\s+|\n", full)
+    return parts[0].strip() if parts else ""

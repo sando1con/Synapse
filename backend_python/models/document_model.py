@@ -14,7 +14,6 @@ from utils.clustering_utils import (
     apply_pca_and_normalize,
     cluster_documents_kmeans,
     extract_representative_keywords,
-    visualize_clusters,
 )
 from utils.file_manager_utils import extract_first_sentence_from_file
 from utils.category_utils import derive_doc_category, hybrid_cluster_label
@@ -38,7 +37,7 @@ def retrain_all_documents(file_info_list, user_id, s3_prefix, shared_id=None):
         label = int(labels[i])
         keywords = cluster_keywords.get(label, [])
         first_sentence = extract_first_sentence_from_file(item["path"])
-        category = derive_doc_category(keywords, first_sentence, item["text"])
+        category = derive_doc_category(keywords, item["filename"] ,first_sentence, item["text"])
         results.append({
             "filename": item["filename"],
             "cluster": label,
@@ -62,7 +61,6 @@ def retrain_all_documents(file_info_list, user_id, s3_prefix, shared_id=None):
     save_merged_results_to_s3(s3_prefix, results)
 
     print(f"[INFO] 전체 재학습 완료: {selected_k}개 클러스터, 문서 {len(file_info_list)}건. S3 저장됨: {s3_prefix}")
-    visualize_clusters(normalized_vectors, labels, file_paths, user_id=user_id, shared_id=shared_id)
 
 
 def analyze_new_documents_incrementally(file_info_list, user_id, shared_id=None):
@@ -96,7 +94,7 @@ def analyze_new_documents_incrementally(file_info_list, user_id, shared_id=None)
         label = int(new_labels[i])
         keywords = new_keywords.get(label, [])
         first_sentence = extract_first_sentence_from_file(item["path"])
-        category = derive_doc_category(keywords, first_sentence, item["text"])
+        category = derive_doc_category(keywords, item["filename"], first_sentence, item["text"])
         new_results.append({
             "filename": item["filename"],
             "cluster": label,
@@ -124,4 +122,3 @@ def analyze_new_documents_incrementally(file_info_list, user_id, shared_id=None)
     save_merged_results_to_s3(s3_prefix, merged_results)
 
     print(f"[INFO] 증분 분석 완료: 신규 {len(new_results)}건, 병합 총 {len(merged_results)}건. S3 저장됨: {s3_prefix}")
-    visualize_clusters(new_normalized, new_labels, file_paths, user_id=user_id, shared_id=shared_id)

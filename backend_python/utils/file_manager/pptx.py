@@ -1,4 +1,5 @@
-# utils/file_manager/ppt.py
+# utils/file_manager/pptx.py
+
 import logging
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE

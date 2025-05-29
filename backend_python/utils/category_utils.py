@@ -1,133 +1,161 @@
-# utils/category_utils.py
 import re
 from collections import Counter
 import numpy as np
 from konlpy.tag import Okt
 from sklearn.feature_extraction.text import TfidfVectorizer
+from utils.file_manager_utils import sanitize_filename
 
-# 불필요한 토큰 제거용 불용어 리스트 (확장됨)
+# 불필요한 토큰 제거용 불용어 리스트
 STOPWORDS = {
-    # 기본 인사 및 형용사
-    "안녕하세요", "되었습니다", "됐습니다", "되었습니다", "합니다", "하였다", "합니다", "되었습니다", "안녕하십니까"
-    # 조사 및 어미
+    "안녕하세요", "되었습니다", "됐습니다", "합니다", "하였다", "안녕하십니까",
     "이", "가", "은", "는", "을", "를", "에", "의", "와", "과", "도", "만", "으로", "로", "께",
     "에서", "에게", "보다", "부터", "까지", "만큼", "까지도", "까지는", "께서",
-    # 접속사 및 부사
     "그리고", "하지만", "또한", "그러나", "또", "더", "더욱", "즉", "바로", "또는",
-    # 의미 없는 단어
     "것", "수", "등", "정도", "약", "약간", "전체", "부분", "아래", "위", "및", "결과",
-    # 기타
     "그", "저", "어떤", "모든", "각", "관련", "이후", "이전", "현재", "기준", "대해", "때문",
-    "때문에", "위해", "위하여", "위해서", "대한", "될", "돼", "되어", "중"
+    "때문에", "위해", "위하여", "위해서", "대한", "될", "돼", "되어"
 }
 
-# 형태소 분석기 초기화 (Okt)
 okt = Okt()
 
-
 def tokenize(text: str) -> list[str]:
-    """
-    간단한 토큰화: 한글, 영문, 숫자를 단위로 분리
-    """
     return re.findall(r"[가-힣A-Za-z0-9]+", text)
 
+def extract_noun_phrases(text: str) -> list[str]:
+    phrases, current = [], []
+    for word, tag in okt.pos(text):
+        if tag in ("NNG", "NNP"):
+            current.append(word)
+        else:
+            if len(current) > 1:
+                phrases.append("".join(current))
+            current = []
+    if len(current) > 1:
+        phrases.append("".join(current))
+    return phrases
+
+def extract_ngrams(tokens: list[str], n: int = 2) -> list[str]:
+    return [" ".join(tokens[i:i+n]) for i in range(len(tokens) - n + 1)]
 
 def compute_idf_weights(doc_texts: list[str]) -> dict[str, float]:
-    """
-    주어진 문서 리스트에서 TF-IDF 벡터라이저를 학습하고,
-    각 단어의 IDF 값을 반환합니다.
-    """
     tfidf = TfidfVectorizer(token_pattern=r"[가-힣A-Za-z0-9]+", stop_words=list(STOPWORDS))
     tfidf.fit(doc_texts)
-    idf_dict = {word: idf for word, idf in zip(tfidf.get_feature_names_out(), tfidf.idf_)}
-    return idf_dict
-
+    return {word: idf for word, idf in zip(tfidf.get_feature_names_out(), tfidf.idf_)}
 
 def derive_doc_category(
     keywords: list[str],
+    filename: str,
     first_sentence: str,
     remaining_text: str,
     weights: dict[str,int] = None,
     idf_weights: dict[str,float] = None
 ) -> str:
     """
-    대표 키워드, 첫 문장, 본문(나머지 텍스트)을 조합해 가중치 기반으로
-    가장 적합한 카테고리를 선택합니다.
+    키워드, 파일명, 첫문장, 본문 텍스트를 결합해
+    (1) 첫문장 전처리, (2) 고/저 빈도 percentile 필터, (3) 동적 가중치 적용
+    최적 카테고리 토큰 또는 구를 반환
 
-    TF-IDF의 IDF 값을 활용해 흔한 단어의 영향력을 줄일 수 있습니다.
     기본 가중치:
-      - keywords:        1
-      - first_sentence:  3
-      - remaining_text:  2
+      title:5, keywords:1, first_sentence:2, remaining_text:1, noun_phrases:1
     """
-    # 기본 가중치 설정
-    if weights is None:
-        weights = {"keywords": 1, "first_sentence": 3, "remaining_text": 2}
-
-    # 1) 키워드에서 불용어 제거
-    kw_tokens = [tok for tok in keywords if tok not in STOPWORDS]
-
-    # 2) 형태소 분석으로 명사만 추출하고, 불용어 제거
-    first_tokens = [tok for tok in okt.nouns(first_sentence) if tok not in STOPWORDS]
-    remain_tokens = [tok for tok in okt.nouns(remaining_text) if tok not in STOPWORDS]
-
-    # 토큰 후보 집합
-    candidates = set(kw_tokens + first_tokens + remain_tokens)
-    scores = Counter()
-    for tok in candidates:
-        # 기본 가중치 합산
-        base_score = 0
-        if tok in kw_tokens:
-            base_score += weights["keywords"]
-        if tok in first_tokens:
-            base_score += weights["first_sentence"]
-        if tok in remain_tokens:
-            base_score += weights["remaining_text"]
-        # IDF 가중치 적용 (있으면 곱셈)
-        if idf_weights and tok in idf_weights:
-            base_score *= idf_weights[tok]
-        scores[tok] = base_score
-
-    # 가장 높은 점수의 토큰 반환
-    return scores.most_common(1)[0][0] if scores else ""
+    try:
+        # 첫문장 전처리
+        fs = first_sentence.split("\n")[0]
+        fs = re.sub(r"\d{1,2}/\d{1,2}/\d{2,4}", "", fs)
+        # 기본 가중치
+        base_weights = weights or {"title":5, "keywords":1, "first_sentence":2, "remaining_text":1, "noun_phrases":1}
+        # 토큰 및 명사구 추출 (한 글자 제외)
+        clean_title = sanitize_filename(filename)
+        title_tokens = [tok for tok in tokenize(clean_title) if tok not in STOPWORDS and len(tok)>1]
+        kw_tokens = [tok for tok in keywords if tok not in STOPWORDS and len(tok)>1]
+        first_tokens = [tok for tok in okt.nouns(fs) if tok not in STOPWORDS and len(tok)>1]
+        remain_tokens = [tok for tok in okt.nouns(remaining_text) if tok not in STOPWORDS and len(tok)>1]
+        noun_phrases = [p for p in extract_noun_phrases(fs + " " + remaining_text) if len(p)>1]
+        # IDF 필터링
+        if idf_weights:
+            vals = np.array(list(idf_weights.values()))
+            low, high = np.percentile(vals, 10), np.percentile(vals, 90)
+            def freq_filter(tok):
+                if tok in title_tokens or tok in first_tokens:
+                    return True
+                v = idf_weights.get(tok, np.median(vals))
+                return low <= v <= high
+            title_tokens = [t for t in title_tokens if freq_filter(t)]
+            kw_tokens = [t for t in kw_tokens if freq_filter(t)]
+            first_tokens = [t for t in first_tokens if freq_filter(t)]
+            remain_tokens = [t for t in remain_tokens if freq_filter(t)]
+            noun_phrases = [p for p in noun_phrases if all(freq_filter(w) for w in p.split())]
+        # 동적 가중치
+        counts = {k: len(v) for k,v in {
+            "title": title_tokens,
+            "keywords": kw_tokens,
+            "first_sentence": first_tokens,
+            "remaining_text": remain_tokens,
+            "noun_phrases": noun_phrases
+        }.items()}
+        total = sum(counts.values()) or 1
+        dyn_w = {k: base_weights[k] * (counts[k]/total) for k in base_weights}
+        # 제목 클리핑
+        if counts.get("title",0)/total > 0.8 and title_tokens:
+            return title_tokens[0]
+        # 후보 및 스코어링
+        candidates = set(title_tokens + kw_tokens + first_tokens + remain_tokens + noun_phrases)
+        scores = Counter()
+        for tok in candidates:
+            score = 0
+            if tok in title_tokens: score += dyn_w["title"]
+            if tok in kw_tokens: score += dyn_w["keywords"]
+            if tok in first_tokens: score += dyn_w["first_sentence"]
+            if tok in remain_tokens: score += dyn_w["remaining_text"]
+            if tok in noun_phrases: score += dyn_w["noun_phrases"]
+            if tok in title_tokens and tok in first_tokens:
+                score += dyn_w["title"] + dyn_w["first_sentence"]
+            scores[tok] = score
+        # unigram vs bigram
+        if not scores:
+            return title_tokens[0] if title_tokens else sanitize_filename(filename).split()[0]
+        best_tok, best_score = scores.most_common(1)[0]
+        bigrams = extract_ngrams(tokenize(fs + " " + remaining_text), 2)
+        # bigram 생성 및 중복 단어 제외
+        bigram_scores = {}
+        for bg in bigrams:
+            parts = bg.split()
+            # skip invalid or identical
+            if len(parts) != 2 or parts[0] == parts[1]:
+                continue
+            bigram_scores[bg] = scores.get(parts[0], 0) + scores.get(parts[1], 0)
+        if bigram_scores:
+            bg, bg_score = max(bigram_scores.items(), key=lambda x: x[1])
+            if bg_score >= best_score * 1.2:
+                return bg
+        return best_tok
+    except Exception:
+        # 안정성: 예외 시 파일명 기반 반환
+        clean = sanitize_filename(filename).split()
+        return clean[0] if clean else ""
 
 
 def hybrid_cluster_label(
     docs: list[dict],
-    epsilon: float = 1e-6,
-    lambda_factor: float = None,
-    detail_boost: float = 1.0
+    detail_boost: float = 0.5
 ) -> str:
     """
-    Medoid + distance-weighted voting 기반으로 클러스터 카테고리를 결정합니다.
-    detail_boost를 통해 문서별 카테고리 빈도의 우선순위를 조정할 수 있습니다.
-
-    docs: 각 문서에 'vector_2d'와 'category' 키가 포함된 dict 리스트
-    epsilon: 거리 0 회피를 위한 작은 값
-    lambda_factor: medoid 보너스 점수 (None이면 최대 가중치 사용)
-    detail_boost: 각 카테고리별 문서 수(count)에 곱해 더해질 가중치
+    클러스터 내 문서별 카테고리와 대표 키워드를 결합해
+    derive_doc_category 로 Super Category를 도출합니다.
     """
-    vectors = np.array([d['vector_2d'] for d in docs])
-    categories = [d['category'] for d in docs]
-
-    # Centroid와 거리 기반 가중 투표
-    centroid = vectors.mean(axis=0)
-    dists = np.linalg.norm(vectors - centroid, axis=1)
-    weights_arr = 1.0 / (dists + epsilon)
-    vote_scores = Counter()
-    for cat, w in zip(categories, weights_arr):
-        vote_scores[cat] += w
-
-    # Medoid 보너스
-    medoid_idx = int(np.argmin(dists))
-    medoid_cat = categories[medoid_idx]
-    if lambda_factor is None:
-        lambda_factor = weights_arr.max()
-    vote_scores[medoid_cat] += lambda_factor
-
-    # 문서 빈도 기반 보너스 (detail_boost)
-    counts = Counter(categories)
-    for cat, cnt in counts.items():
-        vote_scores[cat] += detail_boost * cnt
-
-    return vote_scores.most_common(1)[0][0]
+    try:
+        keywords = docs[0].get('representative_keywords', []) if docs else []
+        vecs = np.array([d['vector_2d'] for d in docs])
+        cent = vecs.mean(axis=0)
+        idx = int(np.argmin(np.linalg.norm(vecs - cent, axis=1)))
+        medoid = docs[idx]
+        fn, fs = medoid['filename'], medoid['first_sentence']
+        rem_text = " ".join(d.get('category','') for d in docs)
+        return derive_doc_category(
+            keywords=keywords,
+            filename=fn,
+            first_sentence=fs,
+            remaining_text=rem_text
+        )
+    except Exception:
+        return ""

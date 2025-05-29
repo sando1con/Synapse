@@ -2,4 +2,4 @@
 
 config = {
 }
-RETRAIN_THRESHOLD = 10
+RETRAIN_THRESHOLD = 1
