@@ -147,3 +147,6 @@ java -jar build/libs/synapse-0.0.1-SNAPSHOT.jar
 - 문서 탐색 시간 절약 (클러스터 자동 분류 및 시각화)
 - 협업 시 문서의 흐름과 유사도 파악 가능
 - 개인/공유 문서의 통합 관리 시스템 제공
+
+## 📹 시연 영상 링크
+https://youtu.be/WFhjbyXUBI4
